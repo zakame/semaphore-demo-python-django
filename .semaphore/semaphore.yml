@@ -13,13 +13,23 @@ name: Semaphore Python / Django Example Pipeline
 # and https://docs.semaphoreci.com/article/32-ubuntu-1804-image
 agent:
   machine:
-    type: e1-standard-2
-    os_image: ubuntu1804
-
-global_job_config:
-  prologue:
-    commands:
-      - sem-version python 3.8
+    type: s1-supernode-1
+    os_image: ''
+  containers:
+    - name: main
+      image: semaphoreci/python:3.8
+      env_vars:
+        - name: DB_HOST
+          value: db
+        - name: DB_NAME
+          value: pydjango
+    - name: db
+      image: semaphoreci/mysql:5.6
+      env_vars:
+        - name: MYSQL_DATABASE
+          value: pydjango
+        - name: MYSQL_ALLOW_EMPTY_PASSWORD
+          value: "true"
 
 # Blocks are the heart of a pipeline and are executed sequentially.
 # Each block has a task that defines one or more jobs. Jobs define the
@@ -88,7 +98,6 @@ blocks:
           # environment as your code.
           # See https://docs.semaphoreci.com/article/32-ubuntu-1804-image#databases-and-services
           # Also https://docs.semaphoreci.com/article/54-toolbox-reference#sem-service
-          - sem-service start mysql
           - checkout
           - cache restore
           - pip install -r requirements.txt --cache-dir .pip_cache
@@ -108,20 +117,12 @@ blocks:
       # This block runs browser-based tests.
       # We need to set environment variables.
       # See https://docs.semaphoreci.com/article/66-environment-variables-and-secrets
-      env_vars:
-        - name: DB_NAME
-          value: 'pydjango'
       # This test requires the application to be running.
       # We start the application server here.
       prologue:
         commands:
-          # Start MySQL database.
-          - sem-service start mysql
-          # Install mysql client
-          - sudo apt-get update && sudo apt-get install -y -qq mysql-client
-          # Create an empty database.
-          # We can connect to the db with root and a blank password.
-          - mysql --host=0.0.0.0 -uroot -e "create database $DB_NAME"
+          # Install selenium/chrome dependencies
+          - sudo apt-get update && sudo apt-get install -y -qq chromium
           - checkout
           - cache restore
           - pip install -r requirements.txt --cache-dir .pip_cache

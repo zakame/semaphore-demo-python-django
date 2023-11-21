@@ -14,7 +14,10 @@ class TaskListViewTest(TestCase):
     """
     # # Browser Integration testing with Selenium
     def test_chrome_site_homepage(self):
-        browser = webdriver.Chrome()
+        options = webdriver.ChromeOptions()
+        options.add_argument("--headless")
+        options.add_argument("--no-sandbox")
+        browser = webdriver.Chrome(options=options)
         browser.get(SITE_URL)
         self.assertIn('Semaphore', browser.title)
         browser.close()
